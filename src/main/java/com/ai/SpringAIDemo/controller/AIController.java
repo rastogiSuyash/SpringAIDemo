@@ -8,13 +8,17 @@ import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,6 +26,9 @@ public class AIController {
 
 //    @Autowired
 //    private OpenAiChatModel chatModel;
+
+    @Autowired
+    private VectorStore vectorStore;
 
     private ChatClient chatClient;
     private ChatMemory chatMemory= MessageWindowChatMemory.builder().build(); /// for chat memory
@@ -105,4 +112,15 @@ public class AIController {
 //        System.out.println(dotProduct/ (Math.sqrt(normA)*Math.sqrt(normB)));
         return dotProduct/ (Math.sqrt(normA)*Math.sqrt(normB));
     }
+
+    @GetMapping("/api/products")
+    public List<Document> getProducts(@RequestParam String text){
+
+//        return vectorStore.similaritySearch(text);
+        return vectorStore.similaritySearch(SearchRequest.builder()
+                .query(text)
+                .topK(2)
+                .build());
+    }
+
 }
