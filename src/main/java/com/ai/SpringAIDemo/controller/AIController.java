@@ -3,6 +3,7 @@ package com.ai.SpringAIDemo.controller;
 import ch.qos.logback.core.net.SyslogOutputStream;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -60,6 +61,7 @@ public class AIController {
         System.out.println(msg.getMetadata().getUsage().getTotalTokens());
         return result;
     }
+
 
     @GetMapping("/api/movie")
     public String getMovie(@RequestParam String type, @RequestParam String year, @RequestParam String lang){
@@ -122,5 +124,62 @@ public class AIController {
                 .topK(2)
                 .build());
     }
+
+    @GetMapping("/api/ask/{query}")
+    public String productInfo(@PathVariable String query) {
+
+        /*// Retrieval
+        List<Document> docs = vectorStore.similaritySearch(query);
+
+        // Augmentation
+        StringBuilder context = new StringBuilder();
+        for (Document doc : docs) {
+            context.append(doc.getFormattedContent()).append("\n");
+        }
+
+        // Generation
+        String prompt = """
+                         You are a helpful product suggestion assistant.
+                Use only the information in the product details below to answer the user.
+                If the information is not available there, say you don't know.
+                Product details:
+                %s
+                User question: %s
+                Answer in a short, clear way with price and other relevant details:
+                """.formatted(context, query);
+
+        return chatClient.prompt(prompt).call().content();*/
+
+
+        // Automatic RAG
+        String template = """
+                 {query}
+                 Context information is below.
+                -------------------------------
+                {question_answer_context}
+                -------------------------------
+                Given the context information and no prior knowledge, answer the query with name and price
+                , category and description.
+                
+                Follow these rules:
+                1. If the answer is not in the context, just say that you don't know.
+                2. Avoid statements like "Based on the context..." or "The provided information....".
+                """;
+
+        PromptTemplate promptTemplate = PromptTemplate.builder()
+                .template(template)
+                .build();
+
+
+        return chatClient
+                .prompt(query)
+                .advisors(QuestionAnswerAdvisor
+                        .builder(vectorStore)
+                        .promptTemplate(promptTemplate)
+                        .build())
+                .call()
+                .content();
+    }
+
 
 }
