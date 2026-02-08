@@ -1,6 +1,7 @@
 package com.ai.SpringAIDemo.controller;
 
 import ch.qos.logback.core.net.SyslogOutputStream;
+import com.ai.SpringAIDemo.DateTimeTool;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
@@ -31,6 +32,9 @@ public class AIController {
     @Autowired
     private VectorStore vectorStore;
 
+    @Autowired
+    private DateTimeTool dateTimeTool;
+
     private ChatClient chatClient;
     private ChatMemory chatMemory= MessageWindowChatMemory.builder().build(); /// for chat memory
 
@@ -52,6 +56,7 @@ public class AIController {
 //                .content();
         ChatResponse msg = chatClient
                 .prompt(message)
+                .tools(dateTimeTool)
                 .call()
                 .chatResponse();
 
